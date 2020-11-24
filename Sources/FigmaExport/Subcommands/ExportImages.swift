@@ -143,19 +143,17 @@ extension FigmaExportCommand {
             // Download SVG files to user's temp directory
             logger.info("Downloading remote files...")
             let remoteFiles = images.flatMap { asset -> [FileContents] in
-                let image = asset.light
-                let fileURL = URL(string: "\(image.name).svg")!
-                let dest = Destination(directory: tempDirectoryLightURL, file: fileURL)
-                var result = [FileContents(destination: dest, sourceURL: image.single.url)]
-
-                if let dark = asset.dark {
-                    let fileURL = URL(string: "\(dark.name).svg")!
-                    let dest = Destination(directory: tempDirectoryDarkURL, file: fileURL)
-                    var file = FileContents(destination: dest, sourceURL: dark.single.url)
-                    file.dark = true
-                    result.append(file)
+                let lightFiles = asset.light.images.map { image -> FileContents in
+                    let fileURL = URL(string: "\(image.name).svg")!
+                    let dest = Destination(directory: tempDirectoryLightURL, file: fileURL)
+                    return FileContents(destination: dest, sourceURL: image.url)
                 }
-                return result
+                let darkFiles = asset.dark?.images.map { image -> FileContents in
+                    let fileURL = URL(string: "\(image.name).svg")!
+                    let dest = Destination(directory: tempDirectoryLightURL, file: fileURL)
+                    return FileContents(destination: dest, sourceURL: image.url, dark: true)
+                } ?? []
+                return lightFiles + darkFiles
             }
             var localFiles = try fileDownloader.fetch(files: remoteFiles)
             
@@ -224,15 +222,17 @@ extension FigmaExportCommand {
             // Download files to user's temp directory
             logger.info("Downloading remote files...")
             let remoteFiles = images.flatMap { asset -> [FileContents] in
-                var result = [FileContents]()
-                if case ImagePack.individualScales(let images) = asset.light {
-                    result.append(contentsOf: makeRemoteFiles(images: images, dark: false, outputDirectory: tempDirectoryURL))
-                }
-                if let darkImages = asset.dark, case ImagePack.individualScales(let images) = darkImages {
-                    result.append(contentsOf: makeRemoteFiles(images: images, dark: true, outputDirectory: tempDirectoryURL))
-                }
-                return result
+                let lightFiles = makeRemoteFiles(
+                    images: asset.light.images,
+                    dark: false,
+                    outputDirectory: tempDirectoryURL
+                )
+                let darkFiles = asset.dark.flatMap { darkImagePack -> [FileContents] in
+                    makeRemoteFiles(images: darkImagePack.images, dark: true, outputDirectory: tempDirectoryURL)
+                } ?? []
+                return lightFiles + darkFiles
             }
+            
             var localFiles = try fileDownloader.fetch(files: remoteFiles)
 
             // Move downloaded files to new empty temp directory
@@ -284,22 +284,17 @@ extension FigmaExportCommand {
         ///   - images: Dictionary of images. Key = scale, value = image info
         ///   - dark: Dark mode?
         ///   - outputDirectory: URL of the output directory
-        private func makeRemoteFiles(images: [Double: Image], dark: Bool, outputDirectory: URL) -> [FileContents] {
-            var result: [FileContents] = []
-            for scale in images.keys {
-                guard let image = images[scale] else { continue }
+        private func makeRemoteFiles(images: [Image], dark: Bool, outputDirectory: URL) -> [FileContents] {
+            images.map { image -> FileContents in
                 let fileURL = URL(string: "\(image.name).\(image.format)")!
+                let scale = image.scale.value
                 let dest = Destination(
                     directory: outputDirectory
                         .appendingPathComponent(dark ? "dark" : "light")
                         .appendingPathComponent(String(scale))
                     , file: fileURL)
-                var file = FileContents(destination: dest, sourceURL: image.url)
-                file.scale = scale
-                file.dark = dark
-                result.append(file)
+                return FileContents(destination: dest, sourceURL: image.url, scale: scale, dark: dark)
             }
-            return result
         }
     }
 }
