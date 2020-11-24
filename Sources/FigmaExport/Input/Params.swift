@@ -50,7 +50,6 @@ struct Params: Decodable {
         }
         
         struct Icons: Decodable {
-            let renderAsTemplate: Bool
             let format: VectorFormat
             let assetsFolder: String
             let preservesVectorRepresentation: [String]?
@@ -61,7 +60,6 @@ struct Params: Decodable {
         }
 
         struct Images: Decodable {
-            let format: VectorFormat
             let assetsFolder: String
             let nameStyle: NameStyle
             

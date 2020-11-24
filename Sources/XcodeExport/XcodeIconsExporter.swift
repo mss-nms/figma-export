@@ -13,8 +13,7 @@ final public class XcodeIconsExporter: XcodeImagesExporterBase {
 
         let imageAssetsFiles = try icons.flatMap { imagePack -> [FileContents] in
             let preservesVector = preservesVectorRepresentation?.first(where: { $0 == imagePack.name }) != nil
-            return try imagePack.makeFileContents(to: assetsFolderURL, preservesVector: preservesVector,
-                                                  renderAsTemplate: output.renderAsTemplate ?? true)
+            return try imagePack.makeFileContents(to: assetsFolderURL, preservesVector: preservesVector)
         }
 
         // Generate extensions

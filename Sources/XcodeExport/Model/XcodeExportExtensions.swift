@@ -72,9 +72,8 @@ extension ImagePack {
         return xcodeImagePack
     }
 
-    func makeFileContents(to directory: URL, preservesVector: Bool?, renderAsTemplate: Bool, appearance: Appearance? = nil) throws -> [FileContents] {
-        let properties = XcodeAssetContents.TemplateProperties(preservesVectorRepresentation: preservesVector,
-                                                               renderAsTemplate: renderAsTemplate)
+    func makeFileContents(to directory: URL, preservesVector: Bool?, appearance: Appearance? = nil) throws -> [FileContents] {
+        let properties = XcodeAssetContents.TemplateProperties(preservesVectorRepresentation: preservesVector)
 
         return try packForXcode()
             .flatMap { imagePack -> [FileContents] in
@@ -107,7 +106,7 @@ extension ImagePack {
 
 extension AssetPair where AssetType == ImagePack {
 
-    func makeFileContents(to directory: URL, preservesVector: Bool?, renderAsTemplate: Bool) throws -> [FileContents] {
+    func makeFileContents(to directory: URL, preservesVector: Bool?) throws -> [FileContents] {
         let name = light.name
         let dirURL = directory.appendingPathComponent("\(name).imageset")
 
@@ -120,8 +119,7 @@ extension AssetPair where AssetType == ImagePack {
         let lightAssetContents = lightPack?.makeXcodeAssetContentsImageData(appearance: .light) ?? []
         let darkAssetContents = darkPack?.makeXcodeAssetContentsImageData(appearance: .dark) ?? []
 
-        let properties = XcodeAssetContents.TemplateProperties(preservesVectorRepresentation: preservesVector,
-                                                               renderAsTemplate: renderAsTemplate)
+        let properties = XcodeAssetContents.TemplateProperties(preservesVectorRepresentation: preservesVector)
 
         let contentsFileContents = try XcodeAssetContents(
             images: lightAssetContents + darkAssetContents,
